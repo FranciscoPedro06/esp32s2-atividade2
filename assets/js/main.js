@@ -1,77 +1,60 @@
 import { authenticate } from "./auth.js";
-import { setupRealtimeListener, addUser, deleteUser } from "./firestore.js";
-import { showCustomMessage, sanitizeNumericInput } from "./ui.js";
-
-const usersCollectionPath = `artifacts/default-app-id/public/data/users`;
+import { startRealtimeListener, addUser, deleteUser } from "./rtdb.js";
+import { showMessage, sanitizeCodeInput } from "./ui.js";
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const codeInput = document.getElementById('user-code');
-    codeInput.addEventListener('input', ()=>sanitizeNumericInput(codeInput));
+
+    const codeInput = document.getElementById('code');
+    codeInput.addEventListener('input', () => sanitizeCodeInput(codeInput));
 
     try {
-        const userId = await authenticate(window.__initial_auth_token);
+        const userId = await authenticate();
         document.getElementById('user-id').textContent = userId;
-        document.getElementById('loading-state').classList.add('hidden');
-        document.getElementById('app-content').classList.remove('hidden');
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
 
-        setupRealtimeListener(usersCollectionPath, snapshot => {
-            const usersList = document.getElementById('users-list');
-            const userCount = document.getElementById('user-count');
-            usersList.innerHTML = '';
-            userCount.textContent = snapshot.size;
-            if(snapshot.empty){
-                usersList.innerHTML = '<p class="text-gray-500 p-4 text-center italic">Nenhum código cadastrado.</p>';
-            }
-            snapshot.forEach(doc=>{
-                const data = doc.data();
+        startRealtimeListener(users => {
+            const list = document.getElementById('list');
+            list.innerHTML = '';
+            const keys = Object.keys(users);
+            document.getElementById('count').textContent = keys.length;
+
+            keys.forEach(key => {
+                const u = users[key];
                 const li = document.createElement('li');
-                li.className = 'flex justify-between items-center p-4 bg-white border-b border-gray-100 last:border-b-0 hover:bg-indigo-50 transition duration-150';
-                li.innerHTML = `<div>
-                    <p class="font-semibold text-gray-800">${data.name}</p>
-                    <p class="text-sm text-gray-500">Código: <span class="font-mono text-lg text-indigo-600 font-bold">${data.code}</span></p>
-                </div>
-                <button data-id="${doc.id}" class="delete-btn bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded-md shadow text-sm">Excluir</button>`;
-                usersList.appendChild(li);
+                li.className = "flex justify-between p-2 bg-white mb-1 rounded shadow";
+                li.innerHTML = `<span>${u.name} - <b>${u.password}</b></span>
+                                <button class="bg-red-500 text-white px-2 rounded">Excluir</button>`;
+                li.querySelector('button').onclick = async () => {
+                    await deleteUser(key);
+                    showMessage("Código excluído!");
+                };
+                list.appendChild(li);
             });
-        }, error => console.error(error));
+        });
 
-    } catch (error) {
-        console.error(error);
-        showCustomMessage("Erro", error.message, "error");
+    } catch (e) {
+        showMessage("Erro: " + e.message);
     }
 
-    document.getElementById('user-form').addEventListener('submit', async e=>{
+    document.getElementById('form').addEventListener('submit', async e => {
         e.preventDefault();
-        const name = document.getElementById('user-name').value.trim();
-        const code = document.getElementById('user-code').value.trim();
-        if(!name || code.length!==4) {
-            showCustomMessage("Erro","Nome e código de 4 dígitos são obrigatórios","error");
+        const name = document.getElementById('name').value.trim();
+        const code = document.getElementById('code').value.trim();
+        if (!name || code.length !== 4) {
+            showMessage("Preencha nome e código de 4 dígitos");
             return;
         }
+
+        const key = "A" + Math.floor(Math.random() * 1000);
         try {
-            await addUser(usersCollectionPath,name,code);
-            showCustomMessage("Sucesso",`Código ${code} cadastrado para ${name}`,"success");
-            document.getElementById('user-name').value='';
-            document.getElementById('user-code').value='';
-        } catch(error){
-            showCustomMessage("Erro",error.message,"error");
+            await addUser(key, name, code);
+            document.getElementById('name').value = '';
+            document.getElementById('code').value = '';
+            showMessage("Código cadastrado!");
+        } catch (e) {
+            showMessage(e.message);
         }
     });
 
-    document.getElementById('users-list').addEventListener('click', async e=>{
-        if(!e.target.classList.contains('delete-btn')) return;
-        const id = e.target.dataset.id;
-        if(confirm('Deseja excluir este código?')){
-            try{
-                await deleteUser(usersCollectionPath,id);
-                showCustomMessage("Excluído","Código removido","success");
-            } catch(err){
-                showCustomMessage("Erro",err.message,"error");
-            }
-        }
-    });
-
-    document.getElementById('modal-close').addEventListener('click', ()=>{
-        document.getElementById('custom-modal').classList.add('hidden');
-    });
 });

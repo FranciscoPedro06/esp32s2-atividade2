@@ -1,67 +1,43 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciador de Acessos - Fechadura Firebase</title>
-    <link rel="stylesheet" href="assets/css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerenciador de Acessos - Realtime DB</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body class="p-4 sm:p-8">
 
-<div class="container mx-auto">
-    <header class="text-center mb-8 p-4 bg-white shadow-xl rounded-xl border-t-4 border-indigo-600">
-        <h1 class="text-3xl font-bold text-indigo-700">🔐 Gerenciamento de Acesso WEB</h1>
-        <p class="text-gray-600 mt-2">Cadastrar e gerenciar senhas de 4 dígitos para o ESP32.</p>
+<div class="max-w-2xl mx-auto">
+    <header class="text-center mb-6 p-4 bg-white shadow-xl rounded-xl border-t-4 border-indigo-600">
+        <h1 class="text-2xl font-bold text-indigo-700">🔐 Gerenciamento de Acesso</h1>
+        <p class="text-xs text-gray-400 mt-1">User ID: <span id="user-id">-</span></p>
     </header>
 
-    <div id="loading-state" class="text-center p-10 text-lg text-indigo-600 font-semibold bg-white rounded-xl shadow-lg">
-        Carregando conexão Firebase...
-    </div>
+    <div id="loading" class="text-center p-10 text-indigo-600 font-semibold bg-white rounded-xl shadow-lg">Carregando...</div>
 
-    <div id="app-content" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-        <div class="lg:col-span-1 bg-white p-6 rounded-xl shadow-lg h-fit border border-gray-100">
-            <h2 class="text-2xl font-semibold mb-6 text-gray-800 border-b pb-3">Adicionar Novo Código</h2>
-            <form id="user-form" class="space-y-6">
-                <div>
-                    <label for="user-name" class="block text-sm font-medium text-gray-700 mb-1">Nome do Usuário</label>
-                    <input type="text" id="user-name" maxlength="30" placeholder="Nome ou identificação" autocomplete="off" class="input-field">
-                </div>
-                <div>
-                    <label for="user-code" class="block text-sm font-medium text-gray-700 mb-1">Código (4 Dígitos)</label>
-                    <input type="password" id="user-code" maxlength="4" minlength="4" inputmode="numeric" placeholder="****" class="code-input input-field">
-                </div>
-                <button type="submit" class="submit-btn">➕ Cadastrar Código</button>
+    <div id="app" class="hidden space-y-6">
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+            <form id="form">
+                <input type="text" id="name" placeholder="Nome" required class="w-full mb-2 p-2 border rounded">
+                <input type="password" id="code" placeholder="****" required maxlength="4" class="w-full mb-2 p-2 code-input border rounded">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded">Cadastrar</button>
             </form>
         </div>
-
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-            <h2 class="text-2xl font-semibold p-6 text-gray-800 border-b bg-gray-50 flex justify-between items-center">
-                Códigos Ativos <span id="user-count" class="text-indigo-600 text-3xl font-extrabold">0</span>
-            </h2>
-            <ul id="users-list" class="divide-y divide-gray-100"></ul>
-            <p class="p-4 text-xs text-indigo-700 bg-indigo-100 border-t border-indigo-200 font-medium">
-                Lembrete: O ESP32 utiliza Wi-Fi para buscar e validar estes códigos.
-            </p>
+        <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+            <h2 class="text-lg font-semibold mb-2">Códigos Ativos (<span id="count">0</span>)</h2>
+            <ul id="list" class="divide-y divide-gray-100"></ul>
         </div>
     </div>
 </div>
 
-<div id="custom-modal" class="hidden fixed inset-0 flex items-end justify-center px-4 py-6 pointer-events-none sm:p-6 sm:items-start sm:justify-end z-50">
-    <div class="max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transition ease-out duration-300 transform translate-y-0 opacity-100 relative">
-        <button id="modal-close" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600">✖</button>
-        <div class="p-4 flex items-start">
-            <div id="modal-icon" class="flex-shrink-0"></div>
-            <div class="ml-3 w-0 flex-1 pt-0.5">
-                <p id="modal-title" class="text-sm font-medium text-gray-900"></p>
-                <p id="modal-message" class="mt-1 text-sm text-gray-500"></p>
-            </div>
-        </div>
+<div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center">
+    <div class="bg-white p-4 rounded shadow w-80">
+        <p id="modal-msg" class="text-center"></p>
     </div>
 </div>
 
-<script type="module" src="main.js"></script>
+<script type="module" src="assets/js/main.js"></script>
 </body>
 </html>
